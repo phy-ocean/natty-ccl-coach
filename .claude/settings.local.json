@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest naati-ccl-coach --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npm install *)",
+      "Bash(npx prisma *)",
+      "Bash(npx ts-node *)",
+      "Bash(node -e \"const {PrismaClient} = require\\('@prisma/client'\\); console.log\\(Object.keys\\(new PrismaClient\\({}\\).constructor\\)\\)\")",
+      "Bash(node -e \"const p = require\\('@prisma/client'\\); console.log\\(JSON.stringify\\(Object.keys\\(p\\)\\)\\)\")",
+      "Bash(npx jest *)",
+      "Bash(npx tsc *)",
+      "Bash(./node_modules/typescript/bin/tsc --noEmit)",
+      "Bash(npm run *)",
+      "Bash(node node_modules/next/dist/bin/next build)",
+      "Bash(node node_modules/next/dist/bin/next dev)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(node node_modules/typescript/bin/tsc --noEmit)",
+      "Bash(node node_modules/eslint/bin/eslint.js src/middleware.ts src/app/login/page.tsx src/app/api/auth/login/route.ts src/app/api/auth/logout/route.ts src/app/api/health/route.ts src/app/api/export/route.ts)"
+    ]
+  }
+}

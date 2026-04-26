@@ -1,0 +1,198 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model UserProfile {
+  id            String   @id @default(cuid())
+  name          String   @default("Candidate")
+  targetScore   Int      @default(85)
+  examDate      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  studyProgress StudyProgress[]
+  testAttempts  TestAttempt[]
+  errorBankItems ErrorBankItem[]
+}
+
+model MockTest {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  dialogues   Dialogue[]
+  attempts    TestAttempt[]
+}
+
+model Dialogue {
+  id          String   @id @default(cuid())
+  mockTestId  String
+  orderIndex  Int
+  title       String
+  topic       String
+  totalWords  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  mockTest    MockTest  @relation(fields: [mockTestId], references: [id], onDelete: Cascade)
+  segments    Segment[]
+  dialogueScores DialogueScore[]
+}
+
+model Segment {
+  id                     String   @id @default(cuid())
+  dialogueId             String
+  orderIndex             Int
+  sourceLanguage         String
+  sourceText             String
+  expectedInterpretation String
+  keywords               String   @default("[]")
+  topic                  String   @default("")
+  register               String   @default("semi-formal")
+  difficulty             String   @default("medium")
+  scoringNotes           String   @default("")
+  wordCount              Int      @default(0)
+  audioFilePath          String?
+  createdAt              DateTime @default(now())
+
+  dialogue    Dialogue   @relation(fields: [dialogueId], references: [id], onDelete: Cascade)
+  recordings  Recording[]
+  segmentScores SegmentScore[]
+}
+
+model TestAttempt {
+  id              String   @id @default(cuid())
+  mockTestId      String
+  userId          String?
+  mode            String   @default("exam")
+  status          String   @default("in_progress")
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+  totalScore      Float?
+  dialogue1Score  Float?
+  dialogue2Score  Float?
+  passed          Boolean?
+  repeatsUsed     String   @default("{}")
+  createdAt       DateTime @default(now())
+
+  mockTest       MockTest  @relation(fields: [mockTestId], references: [id])
+  userProfile    UserProfile? @relation(fields: [userId], references: [id])
+  recordings     Recording[]
+  dialogueScores DialogueScore[]
+}
+
+model Recording {
+  id                               String   @id @default(cuid())
+  attemptId                        String
+  segmentId                        String
+  filePath                         String?
+  mimeType                         String   @default("audio/webm")
+  durationMs                       Int      @default(0)
+  startedAt                        DateTime @default(now())
+  endedAt                          DateTime?
+  sourceLanguage                   String
+  targetLanguage                   String
+  repeatedSegmentUsed              Boolean  @default(false)
+  responseStartedWithinFiveSeconds Boolean  @default(true)
+  uploadStatus                     String   @default("pending")
+  transcriptionStatus              String   @default("pending")
+  createdAt                        DateTime @default(now())
+
+  attempt       TestAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  segment       Segment      @relation(fields: [segmentId], references: [id])
+  transcript    Transcript?
+  segmentScores SegmentScore[]
+}
+
+model Transcript {
+  id          String   @id @default(cuid())
+  recordingId String   @unique
+  text        String
+  confidence  Float?
+  isManual    Boolean  @default(false)
+  provider    String   @default("manual")
+  createdAt   DateTime @default(now())
+
+  recording   Recording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+}
+
+model SegmentScore {
+  id                   String   @id @default(cuid())
+  recordingId          String
+  segmentId            String
+  attemptId            String
+  estimatedScore       Float
+  maxScore             Float    @default(5)
+  deductions           String   @default("[]")
+  missedKeyFacts       String   @default("[]")
+  incorrectFacts       String   @default("[]")
+  unnecessaryAdditions String   @default("[]")
+  betterAnswer         String   @default("")
+  examinerStyleFeedback String  @default("")
+  practiceDrill        String   @default("")
+  createdAt            DateTime @default(now())
+
+  recording Recording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+  segment   Segment   @relation(fields: [segmentId], references: [id])
+}
+
+model DialogueScore {
+  id              String   @id @default(cuid())
+  attemptId       String
+  dialogueId      String
+  estimatedScore  Float
+  maxScore        Float    @default(45)
+  strongestSegments String @default("[]")
+  weakestSegments   String @default("[]")
+  errorSummary    String   @default("")
+  passRisk        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  attempt  TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  dialogue Dialogue    @relation(fields: [dialogueId], references: [id])
+}
+
+model VocabularyTerm {
+  id                String   @id @default(cuid())
+  english           String
+  malayalam         String
+  romanisation      String   @default("")
+  domain            String
+  simpleExplanation String   @default("")
+  exampleSentenceEn String   @default("")
+  exampleSentenceMl String   @default("")
+  commonMistake     String   @default("")
+  difficulty        String   @default("medium")
+  createdAt         DateTime @default(now())
+}
+
+model ErrorBankItem {
+  id          String   @id @default(cuid())
+  userId      String?
+  category    String
+  description String
+  count       Int      @default(1)
+  examples    String   @default("[]")
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  userProfile UserProfile? @relation(fields: [userId], references: [id])
+}
+
+model StudyProgress {
+  id          String   @id @default(cuid())
+  userId      String?
+  day         Int
+  completed   Boolean  @default(false)
+  notes       String   @default("")
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  userProfile UserProfile? @relation(fields: [userId], references: [id])
+}
